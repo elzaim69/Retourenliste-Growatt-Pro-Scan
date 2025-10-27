@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Growatt Retouren Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <style>
+    body { font-family: sans-serif; background: #f0fff0; padding: 20px; }
+    .container { max-width: 600px; margin: auto; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 0 20px rgba(0,128,0,0.1); }
+    h2 { text-align: center; margin-bottom: 20px; color: #008000; }
+    button, select, input { font-size: 16px; margin: 10px 0; width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { text-align: left; padding: 8px; border: 1px solid #ddd; vertical-align: middle; }
+    th { background-color: #e5ffe5; }
+    .btn-main { background: #008000; color: white; border: none; cursor: pointer; }
+    .btn-main:hover { background: #006400; }
+    #reader { width: 100%; margin-top: 12px; display: none; }
+    .icon-btn { background: transparent; border: none; cursor: pointer; font-size: 18px; line-height: 1; padding: 4px 8px; }
+    .icon-btn:hover { opacity: 0.8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Growatt Retouren</h2>
+
+    <button class="btn-main" id="scanBtn" onclick="toggleScanner('Seriennummer')">≣ Seriennummer scannen</button>
+    <div id="reader"></div>
+
+    <label>Seriennummer:</label>
+    <input type="text" id="Seriennummer" placeholder="Barcode hier scannen oder eingeben" />
+
+    <label>Artikel:</label>
+    <select id="artikel">
+      <option value="" disabled selected>Bitte wählen…</option>
+      <option>APX 5.0P-S2/650d</option>
+      <option>SPH 4000TL3 BH UP</option>
+      <option>SPH 5000TL3 BH UP</option>
+      <option>SPH 6000TL3 BH UP</option>
+      <option>SPH 7000TL3 BH UP</option>
+      <option>SPH 8000TL3 BH UP</option>
+      <option>SPH 9000TL3 BH UP</option>
+      <option>SPH 10000TL3 BH UP</option>
+      <option>ARK 5.1H-A1</option>
+      <option>ARK 2.5H-A2</option>
+      <option>ARK 5.1H-A1</option>
+      <option>MID 10KTL3-X</option>
+      <option>MID 10KTL3-XL</option>
+      <option>MID 11KTL3-XH</option>
+      <option>MID 11KTL3-XH </option>
+      <option>MID 11KTL3-XL</option>
+      <option>MID 12KTL3-X</option>
+      <option>MID 12KTL3-XH</option>
+      <option>MID 12KTL3-XL</option>
+      <option>MID 13KTL3-XH</option>
+      <option>MID 15KTL3-X</option>
+      <option>MID 17KTL3-X</option>
+      <option>MID 20KTL3-X</option>
+      <option>MID 20KTL3-X</option>
+      <option>MID 22KTL3-X</option>
+      <option>MID 25KTL3-X</option>
+      <option>MID 6KTL3-XL</option>
+      <option>MID 8KTL3-XL</option>
+      <option>MOD 10KTL3-X </option>
+      <option>MOD 10KTL3-XH</option>
+      <option>MOD 11KTL3-X </option>
+      <option>MOD 12KTL3-X </option>
+      <option>MOD 13KTL3-X</option>
+      <option>MOD 15KTL3-X</option>
+      <option>MOD 7000TL3-X</option>
+      <option>MOD 7000TL3-XH</option>
+      <option>MOD 8000TL3-X </option>
+      <option>MOD 8000TL3-XH</option>
+      <option>MOD 9000TL3-X </option>
+      <option>MOD 9000TL3-XH</option>
+      <option>SPF 6000 ES PLUS</option>
+      <option>SYN 100-XH-30</option>
+      <option>SYN 100-XH-31</option>
+      <option>SYN 50-XH-10</option>
+      <option>SYN 50-XH-11</option>
+      <option>SYN 50-XH-12</option>
+      <option>SYN 50-XH-13</option>
+      <option>SYN 50-XH-30</option>
+      <option>SYN 50-XH-31</option>
+      <option>MIC 800</option>
+      <option>MIC 1000</option>
+      <option>MIC 1500</option>
+      <option>MIC 2000</option>
+      <option>MIC 2500</option>
+      <option>MIC 3000</option>
+      <option>NEO 800</option>
+      <option>NEO 1000</option>
+      <option>NEO 16000</option>
+      <option>NOAH 2000</option>
+      <option>NEXA 2000</option>
+      <option>NEXA EXTENSION</option>
+    </select>
+
+    <label>Grund der Rücksendung:</label>
+    <select id="dienstleister">
+      <option value="" disabled selected>Bitte wählen…</option>
+      <option value="Defekt">Defekt</option>
+      <option value="Keine Spannung">Keine Spannung</option>
+      <option value="Keine Funktion">Keine Funktion</option>
+      <option value="Laut Kunde defekt">Laut Kunde defekt</option>
+      <option value="schaltet zwischendurch ab">schaltet zwischendurch ab</option>
+    </select>
+
+    <button class="btn-main" onclick="addEntry()">Hinzufügen</button>
+
+    <table id="list">
+      <thead>
+        <tr>
+          <th>Datum</th>
+          <th>Artikel</th>
+          <th>Seriennummer</th>
+          <th>Grund</th>
+          <th style="width:60px;">Aktion</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <button class="btn-main" onclick="generatePDF()">PDF erzeugen</button>
+    <button class="btn-main" onclick="generateExcel()">Excel erzeugen</button>
+  </div>
+
+  <!-- Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <script>
+    const listBody = document.querySelector("#list tbody");
+    const data = []; // {datum, artikel, sn, dl}
+    let scanTarget = "Seriennummer";
+
+    // html5-qrcode Instanz/Status
+    let html5QrCode = null;
+    let scannerRunning = false;
+
+    function addEntry() {
+      const sn = document.getElementById("Seriennummer").value.trim();
+      const artikel = document.getElementById("artikel").value;
+      const dl = document.getElementById("dienstleister").value; // Grund
+      const datum = new Date().toLocaleDateString("de-DE");
+
+      if (!sn || !artikel || !dl) {
+        alert("Bitte Seriennummer, Artikel und Grund wählen/ausfüllen.");
+        return;
+      }
+
+      data.push({ datum, artikel, sn, dl });
+      renderTable();
+
+      document.getElementById("Seriennummer").value = "";
+      document.getElementById("artikel").value = "";
+      document.getElementById("dienstleister").value = "";
+    }
+
+    function deleteEntry(index) {
+      if (index < 0 || index >= data.length) return;
+      data.splice(index, 1);
+      renderTable();
+    }
+
+    function renderTable() {
+      listBody.innerHTML = "";
+      data.forEach((entry, idx) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${entry.datum}</td>
+          <td>${entry.artikel}</td>
+          <td>${entry.sn}</td>
+          <td>${entry.dl}</td>
+          <td><button class="icon-btn" title="Eintrag entfernen" aria-label="Eintrag entfernen" onclick="deleteEntry(${idx})">✖</button></td>
+        `;
+        listBody.appendChild(tr);
+      });
+    }
+
+    function generatePDF() {
+      if (data.length === 0) { alert("Keine Daten zum Exportieren vorhanden."); return; }
+      const doc = new window.jspdf.jsPDF();
+      doc.setFontSize(16);
+      doc.setTextColor(0, 128, 0);
+      doc.text("Growatt Retouren", 105, 20, null, null, "center");
+      doc.setTextColor(0, 0, 0);
+      const headers = [["DATUM", "ARTIKEL", "SERIENNUMMER", "GRUND"]];
+      const rows = data.map(e => [e.datum, e.artikel, e.sn, e.dl]);
+      doc.autoTable({
+        head: headers,
+        body: rows,
+        startY: 30,
+        styles: { fontSize: 10, cellPadding: 3 },
+        headStyles: { fillColor: [229, 255, 229], textColor: [0, 0, 0] },
+        margin: { top: 25 }
+      });
+      const filename = `growatt_retouren_${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(filename);
+    }
+
+    function generateExcel() {
+      if (data.length === 0) { alert("Keine Daten zum Exportieren vorhanden."); return; }
+      const worksheetData = [
+        ["DATUM", "ARTIKEL", "SERIENNUMMER", "GRUND"],
+        ...data.map(e => [e.datum, e.artikel, e.sn, e.dl])
+      ];
+      const ws = XLSX.utils.aoa_to_sheet(worksheetData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Growatt Retouren");
+      XLSX.writeFile(wb, `growatt_retouren_${new Date().toISOString().split('T')[0]}.xlsx`);
+    }
+
+    function setFieldValue(fieldId, value) {
+      const el = document.getElementById(fieldId);
+      if (!el) return;
+      el.value = value;
+    }
+
+    // Haptik-Helfer: kurzer Vibrationsimpuls, wenn unterstützt
+    function hapticPulse() {
+      if (navigator && typeof navigator.vibrate === "function") {
+        // ein kurzer, aber klar spürbarer Impuls
+        navigator.vibrate(60);
+      }
+    }
+
+    // ----------- STABILER SCANNER AUF BASIS HTML5-QR-CODE -----------
+    function toggleScanner(fieldId) {
+      const readerElem = document.getElementById("reader");
+      const scanBtn = document.getElementById("scanBtn");
+
+      if (scannerRunning && html5QrCode) {
+        html5QrCode.stop().then(() => {
+          html5QrCode.clear();
+          scannerRunning = false;
+          readerElem.style.display = "none";
+          scanBtn.textContent = "≣ Seriennummer scannen";
+        }).catch(() => {
+          scannerRunning = false;
+          readerElem.style.display = "none";
+          scanBtn.textContent = "≣ Seriennummer scannen";
+        });
+        return;
+      }
+
+      scanTarget = fieldId || "Seriennummer";
+      readerElem.style.display = "block";
+      scanBtn.textContent = "⏹️ Scanner stoppen";
+
+      if (!html5QrCode) {
+        html5QrCode = new Html5Qrcode("reader");
+      } else {
+        try { html5QrCode.clear(); } catch {}
+      }
+
+      const qrbox = { width: Math.min(500, readerElem.clientWidth - 20), height: 180 };
+
+      let config = {
+        fps: 30,
+        qrbox,
+        aspectRatio: 1.7778,
+        rememberLastUsedCamera: true,
+        disableFlip: true,
+        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+        showTorchButtonIfSupported: true,
+        videoConstraints: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        }
+      };
+
+      try {
+        if (window.Html5QrcodeSupportedFormats) {
+          config.formatsToSupport = [
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.CODE_39,
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+            Html5QrcodeSupportedFormats.QR_CODE
+          ];
+        }
+      } catch {}
+
+      html5QrCode.start(
+        { facingMode: "environment" },
+        config,
+        (decodedText) => {
+          hapticPulse();                                 // <-- VIBRATION
+          setFieldValue(scanTarget, decodedText);
+          toggleScanner(); // nach Treffer schließen
+        },
+        () => {} // Frame-Fehler ignorieren
+      ).then(() => {
+        scannerRunning = true;
+      }).catch(err => {
+        scannerRunning = false;
+        readerElem.style.display = "none";
+        scanBtn.textContent = "≣ Seriennummer scannen";
+        alert("Kamera konnte nicht gestartet werden: " + err);
+      });
+    }
+    // -----------------------------------------------------------------
+  </script>
+</body>
+</html>
