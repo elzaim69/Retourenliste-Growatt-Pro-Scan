@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Growatt Retouren Scanner</title>
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     body { font-family: sans-serif; background: #f0fff0; padding: 20px; }
     .container { max-width: 600px; margin: auto; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 0 20px rgba(0,128,0,0.1); }
@@ -15,7 +14,6 @@
     th { background-color: #e5ffe5; }
     .btn-main { background: #008000; color: white; border: none; cursor: pointer; }
     .btn-main:hover { background: #006400; }
-    #reader { width: 100%; margin-top: 12px; display: none; }
     .icon-btn { background: transparent; border: none; cursor: pointer; font-size: 18px; line-height: 1; padding: 4px 8px; }
     .icon-btn:hover { opacity: 0.8; }
   </style>
@@ -24,8 +22,7 @@
   <div class="container">
     <h2>Growatt Retouren</h2>
 
-    <button class="btn-main" id="scanBtn" onclick="toggleScanner('Seriennummer')">≣ Seriennummer scannen</button>
-    <div id="reader"></div>
+    <button class="btn-main" id="scanBtn" disabled>🔴 Zebra-Scanner aktiv</button>
 
     <label>Seriennummer:</label>
     <input type="text" id="Seriennummer" placeholder="Barcode hier scannen oder eingeben" />
@@ -43,55 +40,28 @@
       <option>SPH 10000TL3 BH UP</option>
       <option>ARK 5.1H-A1</option>
       <option>ARK 2.5H-A2</option>
-      <option>ARK 5.1H-A1</option>
       <option>MID 10KTL3-X</option>
       <option>MID 10KTL3-XL</option>
       <option>MID 11KTL3-XH</option>
-      <option>MID 11KTL3-XH </option>
-      <option>MID 11KTL3-XL</option>
       <option>MID 12KTL3-X</option>
-      <option>MID 12KTL3-XH</option>
-      <option>MID 12KTL3-XL</option>
       <option>MID 13KTL3-XH</option>
       <option>MID 15KTL3-X</option>
       <option>MID 17KTL3-X</option>
       <option>MID 20KTL3-X</option>
-      <option>MID 20KTL3-X</option>
       <option>MID 22KTL3-X</option>
       <option>MID 25KTL3-X</option>
-      <option>MID 6KTL3-XL</option>
-      <option>MID 8KTL3-XL</option>
-      <option>MOD 10KTL3-X </option>
-      <option>MOD 10KTL3-XH</option>
-      <option>MOD 11KTL3-X </option>
-      <option>MOD 12KTL3-X </option>
+      <option>MOD 10KTL3-X</option>
       <option>MOD 13KTL3-X</option>
       <option>MOD 15KTL3-X</option>
       <option>MOD 7000TL3-X</option>
-      <option>MOD 7000TL3-XH</option>
-      <option>MOD 8000TL3-X </option>
-      <option>MOD 8000TL3-XH</option>
-      <option>MOD 9000TL3-X </option>
-      <option>MOD 9000TL3-XH</option>
+      <option>MOD 9000TL3-X</option>
       <option>SPF 6000 ES PLUS</option>
       <option>SYN 100-XH-30</option>
-      <option>SYN 100-XH-31</option>
       <option>SYN 50-XH-10</option>
-      <option>SYN 50-XH-11</option>
-      <option>SYN 50-XH-12</option>
-      <option>SYN 50-XH-13</option>
-      <option>SYN 50-XH-30</option>
-      <option>SYN 50-XH-31</option>
       <option>MIC 800</option>
-      <option>MIC 1000</option>
       <option>MIC 1500</option>
-      <option>MIC 2000</option>
-      <option>MIC 2500</option>
       <option>MIC 3000</option>
       <option>NEO 800</option>
-      <option>NEO 1000</option>
-      <option>NEO 16000</option>
-      <option>NOAH 2000</option>
       <option>NEXA 2000</option>
       <option>NEXA EXTENSION</option>
     </select>
@@ -133,11 +103,6 @@
   <script>
     const listBody = document.querySelector("#list tbody");
     const data = []; // {datum, artikel, sn, dl}
-    let scanTarget = "Seriennummer";
-
-    // html5-qrcode Instanz/Status
-    let html5QrCode = null;
-    let scannerRunning = false;
 
     function addEntry() {
       const sn = document.getElementById("Seriennummer").value.trim();
@@ -173,7 +138,7 @@
           <td>${entry.artikel}</td>
           <td>${entry.sn}</td>
           <td>${entry.dl}</td>
-          <td><button class="icon-btn" title="Eintrag entfernen" aria-label="Eintrag entfernen" onclick="deleteEntry(${idx})">✖</button></td>
+          <td><button class="icon-btn" title="Eintrag entfernen" onclick="deleteEntry(${idx})">✖</button></td>
         `;
         listBody.appendChild(tr);
       });
@@ -212,97 +177,47 @@
       XLSX.writeFile(wb, `growatt_retouren_${new Date().toISOString().split('T')[0]}.xlsx`);
     }
 
-    function setFieldValue(fieldId, value) {
-      const el = document.getElementById(fieldId);
-      if (!el) return;
-      el.value = value;
-    }
-
-    // Haptik-Helfer: kurzer Vibrationsimpuls, wenn unterstützt
     function hapticPulse() {
       if (navigator && typeof navigator.vibrate === "function") {
-        // ein kurzer, aber klar spürbarer Impuls
         navigator.vibrate(60);
       }
     }
 
-    // ----------- STABILER SCANNER AUF BASIS HTML5-QR-CODE -----------
-    function toggleScanner(fieldId) {
-      const readerElem = document.getElementById("reader");
-      const scanBtn = document.getElementById("scanBtn");
+    /* --- 🔴 ZEBRA-SCANNER INTEGRATION --- */
+    const zebraInput = document.createElement("input");
+    zebraInput.type = "text";
+    zebraInput.style.position = "fixed";
+    zebraInput.style.left = "-9999px";
+    zebraInput.autocomplete = "off";
+    zebraInput.spellcheck = false;
+    document.body.appendChild(zebraInput);
 
-      if (scannerRunning && html5QrCode) {
-        html5QrCode.stop().then(() => {
-          html5QrCode.clear();
-          scannerRunning = false;
-          readerElem.style.display = "none";
-          scanBtn.textContent = "≣ Seriennummer scannen";
-        }).catch(() => {
-          scannerRunning = false;
-          readerElem.style.display = "none";
-          scanBtn.textContent = "≣ Seriennummer scannen";
-        });
-        return;
-      }
+    function keepFocus() { zebraInput.focus(); }
+    window.addEventListener("load", keepFocus);
+    window.addEventListener("click", keepFocus);
+    window.addEventListener("focus", keepFocus);
 
-      scanTarget = fieldId || "Seriennummer";
-      readerElem.style.display = "block";
-      scanBtn.textContent = "⏹️ Scanner stoppen";
+    let buffer = "";
+    zebraInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const code = buffer.trim();
+        buffer = "";
+        if (code.length > 0) {
+          document.getElementById("Seriennummer").value = code;
+          hapticPulse();
 
-      if (!html5QrCode) {
-        html5QrCode = new Html5Qrcode("reader");
-      } else {
-        try { html5QrCode.clear(); } catch {}
-      }
-
-      const qrbox = { width: Math.min(500, readerElem.clientWidth - 20), height: 180 };
-
-      let config = {
-        fps: 30,
-        qrbox,
-        aspectRatio: 1.7778,
-        rememberLastUsedCamera: true,
-        disableFlip: true,
-        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-        showTorchButtonIfSupported: true,
-        videoConstraints: {
-          facingMode: { ideal: "environment" },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
+          // Automatisches Hinzufügen nach Scan
+          addEntry();
         }
-      };
+      } else if (e.key.length === 1) {
+        buffer += e.key;
+      } else if (e.key === "Backspace") {
+        buffer = buffer.slice(0, -1);
+      }
+    });
 
-      try {
-        if (window.Html5QrcodeSupportedFormats) {
-          config.formatsToSupport = [
-            Html5QrcodeSupportedFormats.CODE_128,
-            Html5QrcodeSupportedFormats.CODE_39,
-            Html5QrcodeSupportedFormats.EAN_13,
-            Html5QrcodeSupportedFormats.EAN_8,
-            Html5QrcodeSupportedFormats.QR_CODE
-          ];
-        }
-      } catch {}
-
-      html5QrCode.start(
-        { facingMode: "environment" },
-        config,
-        (decodedText) => {
-          hapticPulse();                                 // <-- VIBRATION
-          setFieldValue(scanTarget, decodedText);
-          toggleScanner(); // nach Treffer schließen
-        },
-        () => {} // Frame-Fehler ignorieren
-      ).then(() => {
-        scannerRunning = true;
-      }).catch(err => {
-        scannerRunning = false;
-        readerElem.style.display = "none";
-        scanBtn.textContent = "≣ Seriennummer scannen";
-        alert("Kamera konnte nicht gestartet werden: " + err);
-      });
-    }
-    // -----------------------------------------------------------------
+    console.log("✅ Zebra-Scanner aktiv. Einfach Barcode scannen – wird automatisch hinzugefügt.");
   </script>
 </body>
 </html>
