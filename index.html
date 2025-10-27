@@ -22,7 +22,7 @@
   <div class="container">
     <h2>Growatt Retouren</h2>
 
-    <button class="btn-main" id="scanBtn" disabled>🔴 Zebra-Scanner aktiv</button>
+    <button class="btn-main" id="scanBtn">🔴 Zebra-Scanner starten</button>
 
     <label>Seriennummer:</label>
     <input type="text" id="Seriennummer" placeholder="Barcode hier scannen oder eingeben" />
@@ -102,12 +102,12 @@
 
   <script>
     const listBody = document.querySelector("#list tbody");
-    const data = []; // {datum, artikel, sn, dl}
+    const data = [];
 
     function addEntry() {
       const sn = document.getElementById("Seriennummer").value.trim();
       const artikel = document.getElementById("artikel").value;
-      const dl = document.getElementById("dienstleister").value; // Grund
+      const dl = document.getElementById("dienstleister").value;
       const datum = new Date().toLocaleDateString("de-DE");
 
       if (!sn || !artikel || !dl) {
@@ -183,7 +183,10 @@
       }
     }
 
-    /* --- 🔴 ZEBRA-SCANNER INTEGRATION --- */
+    /* --- 🟢 ZEBRA-SCANNER INTEGRATION --- */
+    let buffer = "";
+    let scannerActive = false;
+
     const zebraInput = document.createElement("input");
     zebraInput.type = "text";
     zebraInput.style.position = "fixed";
@@ -192,13 +195,30 @@
     zebraInput.spellcheck = false;
     document.body.appendChild(zebraInput);
 
-    function keepFocus() { zebraInput.focus(); }
-    window.addEventListener("load", keepFocus);
+    function keepFocus() {
+      if (scannerActive) zebraInput.focus();
+    }
+
+    document.getElementById("scanBtn").addEventListener("click", () => {
+      scannerActive = !scannerActive;
+      const btn = document.getElementById("scanBtn");
+      if (scannerActive) {
+        btn.textContent = "🟢 Zebra-Scanner aktiv";
+        btn.style.background = "#006400";
+        zebraInput.focus();
+        console.log("✅ Zebra-Scanner aktiviert");
+      } else {
+        btn.textContent = "🔴 Zebra-Scanner gestoppt";
+        btn.style.background = "#008000";
+        console.log("⛔ Zebra-Scanner deaktiviert");
+      }
+    });
+
     window.addEventListener("click", keepFocus);
     window.addEventListener("focus", keepFocus);
 
-    let buffer = "";
     zebraInput.addEventListener("keydown", (e) => {
+      if (!scannerActive) return;
       if (e.key === "Enter") {
         e.preventDefault();
         const code = buffer.trim();
@@ -206,8 +226,6 @@
         if (code.length > 0) {
           document.getElementById("Seriennummer").value = code;
           hapticPulse();
-
-          // Automatisches Hinzufügen nach Scan
           addEntry();
         }
       } else if (e.key.length === 1) {
@@ -217,7 +235,7 @@
       }
     });
 
-    console.log("✅ Zebra-Scanner aktiv. Einfach Barcode scannen – wird automatisch hinzugefügt.");
+    console.log("✅ Zebra-Scanner-Integration geladen. Über Button aktivieren und Barcode scannen.");
   </script>
 </body>
 </html>
